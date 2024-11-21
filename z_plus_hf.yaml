@@ -1,0 +1,19 @@
+name: zphf
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - numpy
+  - awkward
+  - uproot
+  - numba
+  - hist
+  - mplhep
+  - pythia8
+  - matplotlib
+  - numpy
+  - seaborn
+  - pip
+  - ipykernel
+  - pandas

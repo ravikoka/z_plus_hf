@@ -70,10 +70,8 @@ def generate_events(run_num, rng, parent_data_dir, num_batches, batch_size):
     pythia.readString("Random:setSeed = on")
     pythia.readString(f"Random:Seed = {seed}")
     
-
     pythia.init()
     
-
     for batch_num in range(num_batches):
 
         events = ak.Array([])
@@ -89,8 +87,6 @@ def generate_events(run_num, rng, parent_data_dir, num_batches, batch_size):
         print(f'{run_num} here')
         print(f'batch num: {batch_num}, num events processed: {(batch_num + 1) * batch_size}')
         
-        
-        #out_file_dir = f'{parent_data_dir}run{run_num}/'
         out_file_dir = parent_data_dir + f'run{run_num}/'
         os.makedirs(os.path.dirname(out_file_dir), exist_ok=True)
         with open(out_file_dir + f'pp_Z_production_13600_{batch_num}.pkl', 'wb') as out_file:

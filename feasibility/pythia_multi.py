@@ -7,7 +7,10 @@ import hist
 import matplotlib.pyplot as plt
 import uproot
 
+import os
+
 import time
+from multiprocessing import Pool, freeze_support
 
 
 def process_event(batch_num, event_num, pythia_event):
@@ -49,15 +52,10 @@ def process_event(batch_num, event_num, pythia_event):
         
     return ak.Array([particle_data])
 
+# write seed function to feed to generate events
 
-if __name__ == '__main__':
+def generate_events(run_num, rng, parent_data_dir, num_batches, batch_size):
     
-    RAW_DATA_DIR = '/Users/ravikoka/repos/z_plus_hf/feasibility/data/test/'
-
-    NUM_EVENTS = int(1e4) 
-    BATCH_SIZE = 500
-    NUM_BATCHES = NUM_EVENTS // BATCH_SIZE
-
     pythia = pythia8.Pythia()
 
     pythia.readString("Beams:eCM = 13600")
@@ -69,14 +67,19 @@ if __name__ == '__main__':
     pythia.readString("WeakDoubleBoson:all = on")
     pythia.readString("WeakSingleBoson:all = on")
     pythia.readString("SoftQCD:all = off")
+    
+    seed = rng.integers(1, 9e8+1, dtype=int)
+    pythia.readString("Random:setSeed = on")
+    pythia.readString(f"Random:Seed = {seed}")
+    
 
     pythia.init()
+    
 
-
-    for batch_num in range(NUM_BATCHES):
+    for batch_num in range(num_batches):
 
         events = ak.Array([])
-        for event_num in range(BATCH_SIZE):
+        for event_num in range(batch_size):
             
             if not pythia.next():
                 continue
@@ -85,8 +88,45 @@ if __name__ == '__main__':
         
             events = ak.concatenate([events, particle_data])
             
+        print(f'{run_num} here')
+        print(f'batch num: {batch_num}, num events processed: {(batch_num + 1) * batch_size}')
         
-        print(f'batch num: {batch_num}, num events processed: {(batch_num + 1) * BATCH_SIZE}')
         
-        with open(f'{RAW_DATA_DIR}pp_Z_production_13600_{batch_num}.pkl', 'wb') as out_file:
+        out_file_dir = f'{parent_data_dir}run{run_num}/'
+        os.makedirs(os.path.dirname(out_file_dir), exist_ok=True)
+        with open(f'{out_file_dir}pp_Z_production_13600_{batch_num}.pkl', 'wb') as out_file:
             pkl.dump(events, out_file)
+            
+def main():
+    t0 = time.time()
+    RAW_DATA_DIR = '/Users/ravikoka/repos/z_plus_hf/feasibility/data/multi/'
+
+    NUM_EVENTS = int(1e3) 
+    BATCH_SIZE = 500
+    NUM_BATCHES = NUM_EVENTS // BATCH_SIZE
+    
+    NUM_PROC = 4 # number of cores to use 
+    
+    parent_rng = np.random.default_rng(2024)
+    child_rngs = parent_rng.spawn(NUM_PROC)
+
+    args = [(proc_num, child_rngs[proc_num], RAW_DATA_DIR, NUM_BATCHES, BATCH_SIZE) for proc_num in range(NUM_PROC)]
+    print(args)
+    
+    with Pool(NUM_PROC) as pool:
+        proc = pool.starmap(generate_events, args)
+        
+    t1 = time.time()
+    
+    print(f'total time: {t1-t0}')
+    print(f'events/s: {NUM_EVENTS*NUM_PROC / (t1-t0)}')
+    
+
+if __name__ == '__main__':
+    main()
+    
+    
+    
+    
+
+    

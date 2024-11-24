@@ -13,7 +13,7 @@ import time
 from multiprocessing import Pool, freeze_support
 
 
-def process_event(batch_num, event_num, pythia_event):
+def process_event(pythia_event):
     px = [] 
     py = []
     pz = []
@@ -52,8 +52,6 @@ def process_event(batch_num, event_num, pythia_event):
         
     return ak.Array([particle_data])
 
-# write seed function to feed to generate events
-
 def generate_events(run_num, rng, parent_data_dir, num_batches, batch_size):
     
     pythia = pythia8.Pythia()
@@ -68,7 +66,7 @@ def generate_events(run_num, rng, parent_data_dir, num_batches, batch_size):
     pythia.readString("WeakSingleBoson:all = on")
     pythia.readString("SoftQCD:all = off")
     
-    seed = rng.integers(1, 9e8+1, dtype=int)
+    seed = rng.integers(1, 9e8+1, dtype=int) # the min and max seed values in pythia are 1 and 9 mil., respectively
     pythia.readString("Random:setSeed = on")
     pythia.readString(f"Random:Seed = {seed}")
     
@@ -84,7 +82,7 @@ def generate_events(run_num, rng, parent_data_dir, num_batches, batch_size):
             if not pythia.next():
                 continue
             
-            particle_data = process_event(batch_num, event_num, pythia.event)
+            particle_data = process_event(pythia.event)
         
             events = ak.concatenate([events, particle_data])
             
@@ -92,9 +90,10 @@ def generate_events(run_num, rng, parent_data_dir, num_batches, batch_size):
         print(f'batch num: {batch_num}, num events processed: {(batch_num + 1) * batch_size}')
         
         
-        out_file_dir = f'{parent_data_dir}run{run_num}/'
+        #out_file_dir = f'{parent_data_dir}run{run_num}/'
+        out_file_dir = parent_data_dir + f'run{run_num}/'
         os.makedirs(os.path.dirname(out_file_dir), exist_ok=True)
-        with open(f'{out_file_dir}pp_Z_production_13600_{batch_num}.pkl', 'wb') as out_file:
+        with open(out_file_dir + f'pp_Z_production_13600_{batch_num}.pkl', 'wb') as out_file:
             pkl.dump(events, out_file)
             
 def main():
@@ -105,7 +104,7 @@ def main():
     BATCH_SIZE = 500
     NUM_BATCHES = NUM_EVENTS // BATCH_SIZE
     
-    NUM_PROC = 4 # number of cores to use 
+    NUM_PROC = 4 # number of cores to use, data for each process/run is stored in a separate directory  
     
     parent_rng = np.random.default_rng(2024)
     child_rngs = parent_rng.spawn(NUM_PROC)
@@ -119,6 +118,7 @@ def main():
     t1 = time.time()
     
     print(f'total time: {t1-t0}')
+    print(f'num events generated: {NUM_PROC* NUM_BATCHES * BATCH_SIZE}') # num events run over is given by floor division. this shouldn't really be an issue usually but let's print the number generated as a safeguard
     print(f'events/s: {NUM_EVENTS*NUM_PROC / (t1-t0)}')
     
 

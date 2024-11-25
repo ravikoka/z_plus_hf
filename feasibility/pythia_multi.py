@@ -1,16 +1,13 @@
 import pythia8 
+import os
+import time
 
 import awkward as ak
 import numpy as np
 import pickle as pkl
-import hist 
 import matplotlib.pyplot as plt
-import uproot
 
-import os
-
-import time
-from multiprocessing import Pool, freeze_support
+from multiprocessing import Pool
 
 
 def process_event(pythia_event):
@@ -52,6 +49,7 @@ def process_event(pythia_event):
         
     return ak.Array([particle_data])
 
+
 def generate_events(run_num, rng, parent_data_dir, num_batches, batch_size):
     
     pythia = pythia8.Pythia()
@@ -92,11 +90,12 @@ def generate_events(run_num, rng, parent_data_dir, num_batches, batch_size):
         with open(out_file_dir + f'pp_Z_production_13600_{batch_num}.pkl', 'wb') as out_file:
             pkl.dump(events, out_file)
             
+            
 def main():
     t0 = time.time()
     RAW_DATA_DIR = '/Users/ravikoka/repos/z_plus_hf/feasibility/data/multi/'
 
-    NUM_EVENTS = int(1e3) 
+    NUM_EVENTS = 125000 #int(1e3) 
     BATCH_SIZE = 500
     NUM_BATCHES = NUM_EVENTS // BATCH_SIZE
     
@@ -114,8 +113,8 @@ def main():
     t1 = time.time()
     
     print(f'total time: {t1-t0}')
-    print(f'num events generated: {NUM_PROC* NUM_BATCHES * BATCH_SIZE}') # num events run over is given by floor division. this shouldn't really be an issue usually but let's print the number generated as a safeguard
-    print(f'events/s: {NUM_EVENTS*NUM_PROC / (t1-t0)}')
+    print(f'num events generated: {NUM_PROC * NUM_BATCHES * BATCH_SIZE}') # num events run over is given by floor division. this shouldn't really be an issue usually but let's print the number generated as a safeguard
+    print(f'events/s: {NUM_EVENTS * NUM_PROC / (t1-t0)}')
     
 
 if __name__ == '__main__':

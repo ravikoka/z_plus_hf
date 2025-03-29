@@ -1,0 +1,20 @@
+[project]
+name = "z-plus-hf"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "awkward>=2.8.1",
+    "fastjet>=3.4.3.1",
+    "hist>=2.8.0",
+    "mplhep>=0.3.59",
+    "pandas>=2.2.3",
+    "pyarrow>=19.0.1",
+    "vector>=1.6.1",
+]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=6.29.5",
+]

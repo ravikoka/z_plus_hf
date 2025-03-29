@@ -50,19 +50,23 @@ def process_event(pythia_event):
     return ak.Array([particle_data])
 
 
-def generate_events(run_num, rng, parent_data_dir, num_batches, batch_size):
+def generate_events(run_num, rng, parent_data_dir, num_batches, batch_size, compress_output=True):
     
     pythia = pythia8.Pythia()
 
     pythia.readString("Beams:eCM = 5020")
-    pythia.readString("HardQCD:all = on")
-    pythia.readString("PhaseSpace:pTHatMin = 100.") # check this
-    pythia.readString("PhaseSpace:pTHatMin = 500.")
+    #pythia.readString("HardQCD:all = on")
+    #pythia.readString("PhaseSpace:pTHatMin = 100.") # check this
+    #pythia.readString("PhaseSpace:pTHatMin = 500.")
     
     pythia.readString("WeakBosonAndParton:all = on")
-    pythia.readString("WeakBosonExchange:all = on")
-    pythia.readString("WeakDoubleBoson:all = on")
+    #pythia.readString("WeakBosonExchange:all = on")
+    #pythia.readString("WeakDoubleBoson:all = on")
     pythia.readString("WeakSingleBoson:all = on")
+    pythia.readString("SigmaProcess:factorScale2=6")
+    pythia.readString("SigmaProcess:renormScale2=6")
+    
+    pythia.readString("PhaseSpace:Q2min=10")
     
     seed = rng.integers(1, 9e8+1, dtype=int) # the min and max seed values in pythia are 1 and 9 mil., respectively
     pythia.readString("Random:setSeed = on")
@@ -85,24 +89,28 @@ def generate_events(run_num, rng, parent_data_dir, num_batches, batch_size):
             sigma_errs.append(pythia.infoPython().sigmaErr())
             
             events = ak.concatenate([events, particle_data])
-    
+
+        events['sigma_gen'] = sigma_gens
+        events['sigma_err'] = sigma_errs
+        
         print(f'{run_num} here')
         print(f'batch num: {batch_num}, num events processed: {(batch_num + 1) * batch_size}')
         
-        #print(f'{pythia.infoPython().sigmaGen()}')
-        #print(f'{pythia.infoPython().sigmaErr()}')
-        
         out_file_dir = parent_data_dir + f'run{run_num}/'
         os.makedirs(os.path.dirname(out_file_dir), exist_ok=True)
-        with open(out_file_dir + f'pp_Z_production_13600_{batch_num}.pkl', 'wb') as out_file:
-            pkl.dump([events, sigma_gens, sigma_errs], out_file)
+        
+        if compress_output: 
+            ak.to_parquet(events, out_file_dir + f'pp_Z_production_13600_{batch_num}.parquet')
+        else:  
+            with open(out_file_dir + f'pp_Z_production_13600_{batch_num}.pkl', 'wb') as out_file:
+                pkl.dump(events, out_file)
             
             
 def main():
     t0 = time.time()
-    RAW_DATA_DIR = '/Users/ravikoka/repos/z_plus_hf/feasibility/data/multi/'
+    RAW_DATA_DIR = '/Users/ravikoka/repos/z_plus_hf/feasibility/data/multi_parquet/'
 
-    NUM_EVENTS = 125000 #500 #250000 #125000 #int(1e3) 
+    NUM_EVENTS = 125000#1000 #500 #250000 #125000 #int(1e3) 
     BATCH_SIZE = 500
     NUM_BATCHES = NUM_EVENTS // BATCH_SIZE
     

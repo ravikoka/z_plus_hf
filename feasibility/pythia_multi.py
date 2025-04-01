@@ -68,7 +68,7 @@ def generate_events(run_num, rng, parent_data_dir, num_batches, batch_size, comp
     
     pythia.readString("PhaseSpace:Q2min=10")
     
-    seed = rng.integers(1, 9e8+1, dtype=int) # the min and max seed values in pythia are 1 and 9 mil., respectively
+    seed = rng.integers(1, 9e8+1, dtype=int) # the min and max seed values in pythia are 1 and 900 mil., respectively
     pythia.readString("Random:setSeed = on")
     pythia.readString(f"Random:Seed = {seed}")
     

@@ -1,6 +1,18 @@
 import awkward as ak
 import numpy as np
 
+def get_invariant_mass(left_particles, right_particles):
+    
+    mother_four_vector = ak.zip(
+        {'px': (left_particles + right_particles).px,
+        'py': (left_particles + right_particles).py,
+        'pz': (left_particles + right_particles).pz,
+        'E': (left_particles + right_particles).E}, 
+        with_name='Momentum4D'
+        )
+    
+    return mother_four_vector.m
+
 def invariant_mass(pairs, left_mass, right_mass):
     '''
     Calculates the invariant mass between pairs of particles. I assume these are pairs of particles with different identities. This means I won't have pairs of the same particle. If for some reason, you wanted to calculate the invariant mass using the same particle, this code needs to be modified (really at the level of the cartesian product).
@@ -9,6 +21,7 @@ def invariant_mass(pairs, left_mass, right_mass):
     left_mass (float): the mass of the left particles in each pair. Note: I am assuming that the left element of every pair is the same type of particle (and the same assumption goes for the right element).
     right_mass (float): the mass of the right particles in each pair. 
     
+    can just sum and then use .m if registered with awkward.
     '''
     left, right = ak.unzip(pairs)
     left_energy = np.sqrt(left.px**2 + left.py**2 + left.pz**2 + left_mass**2)

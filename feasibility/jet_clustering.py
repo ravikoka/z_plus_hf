@@ -66,7 +66,7 @@ def get_lesub(constituents):
     return lesub
 
 
-def cluster_jets(particles, radius=0.4, min_pt=2.5, cluster_algo=fj.antikt_algorithm, do_substructure=True):
+def cluster_jets(particles, radius=0.4, min_pt=10, cluster_algo=fj.antikt_algorithm, do_substructure=True):
     '''
     particles (awkward array): Events of particles. These should be registered with "vector" as four-vectors to make calculations easier later.  
     radius: radius parameter for jet clustering. 

@@ -1,8 +1,10 @@
 feasibility/data/raw/
 feasibility/data/
+/feasibility/__pycache__
 
 .venv
-
-uv.lock
 .python-version
 .DS_Store
+uv.lock
+
+learning
